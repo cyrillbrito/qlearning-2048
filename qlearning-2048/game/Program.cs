@@ -31,16 +31,54 @@ namespace game
             //    else
             //        continue;
 
-            //    possibles = instace.Play(dir);
+            //    var reward = instace.Play(dir);
+            //    if (instace.PossibleMoves().Count == 0)
+            //    {
+            //        break;
+            //    }
             //    Console.WriteLine(instace);
 
             //    possibles.ForEach(p => Console.Write(p));
             //    Console.WriteLine();
             //}
 
-            var bot = new Bot();
+            //Console.WriteLine(instace.FinalScore());
 
-            bot.PlayOneGame();
+
+            var bot = new Bot();
+            bot.Learn(10000);
+
+            //for (var i = 0; i < 1000; i++)
+            //{
+            //    bot.PlayOneGame(.8);
+            //}
+
+            //for (var i = 0; i < 1000; i++)
+            //{
+            //    bot.PlayOneGame(.6);
+            //}
+
+            //for (var i = 0; i < 1000; i++)
+            //{
+            //    bot.PlayOneGame(.4);
+            //}
+
+            //for (var i = 0; i < 1000; i++)
+            //{
+            //    bot.PlayOneGame(.2);
+            //}
+
+            //for (var i = 0; i < 10; i++)
+            //{
+            //    bot.PlayOneGame(0);
+            //}
+
+            //Console.WriteLine("INTERSECTIONS: " + bot.intersections);
+
+
+            //var game = new GameInstance(3);
+
+            //game.Transforms();
         }
     }
 }
