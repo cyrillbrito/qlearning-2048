@@ -7,11 +7,9 @@ namespace game
 {
     public class GameInstance
     {
-
         private int size;
 
-        /// [row][column]
-        private int[] board;
+        private Board board;
         private Random rng;
 
         // 1 1 0
@@ -23,10 +21,9 @@ namespace game
         public GameInstance(int size)
         {
             this.size = size;
-            //board = new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
-            board = new int[size * size];
+            board = new Board<byte>(size);
             rng = new Random();
-            this.PlaceNewPiece();
+            PlaceNewPiece();
         }
 
         public int Play(int dir)
@@ -42,6 +39,7 @@ namespace game
             var zeros = new List<int>(size * size);
             for (var i = 0; i < board.Length; i++)
             {
+                board.get
                 if (board[i] == 0)
                 {
                     zeros.Add(i);
@@ -162,48 +160,6 @@ namespace game
             }
         }
 
-        private int Rotate0(int row, int col) => StartLowSizeBySize(row) + StartLowOneByOne(col);
-        private int Rotate1(int row, int col) => StartLowOneByOne(row) + StartHighSizeBySize(col);
-        private int Rotate2(int row, int col) => StartHighSizeBySize(row) + StartHighOneByOne(col);
-        private int Rotate3(int row, int col) => StartHighOneByOne(row) + StartLowSizeBySize(col);
-        private int Rotate0T(int row, int col) => StartLowSizeBySize(row) + StartHighOneByOne(col);
-        private int Rotate1T(int row, int col) => StartHighOneByOne(row) + StartHighSizeBySize(col);
-        private int Rotate2T(int row, int col) => StartHighSizeBySize(row) + StartLowOneByOne(col);
-        private int Rotate3T(int row, int col) => StartLowOneByOne(row) + StartLowSizeBySize(col);
-
-        private int StartLowOneByOne(int v) => v;
-        private int StartLowSizeBySize(int v) => v * size;
-        private int StartHighOneByOne(int v) => size - v - 1;
-        private int StartHighSizeBySize(int v) => size * (size - v - 1);
-
-        public void Transforms()
-        {
-            var funcs = new Func<int, int, int>[]{
-                Rotate0,
-                Rotate1,
-                Rotate2,
-                Rotate3,
-                Rotate0T,
-                Rotate1T,
-                Rotate2T,
-                Rotate3T
-            };
-
-            foreach (var func in funcs)
-            {
-                for (int row = 0; row < size; row++)
-                {
-                    for (int col = 0; col < size; col++)
-                    {
-                        var pos = func(row, col);
-                        Console.Write(board[pos].ToString() + " ");
-                    }
-                    Console.WriteLine();
-                }
-                Console.WriteLine();
-            }
-        }
-
         public override string ToString()
         {
             var builder = new StringBuilder();
@@ -270,9 +226,4 @@ namespace game
         }
     }
 
-    class TranformState
-    {
-        public Func<int, int, int> Func { get; set; }
-        public ulong State { get; set; }
-    }
 }
