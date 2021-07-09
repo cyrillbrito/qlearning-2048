@@ -6,38 +6,38 @@ using System.Text;
 
 namespace game
 {
-    public class Board<T>
+    public class Board
     {
         /// Allows the board to be access like a array
-        public T this[int index]
+        public byte this[int index]
         {
             get => _board[index];
             set => _board[index] = value;
         }
 
         private readonly int _size;
-        private readonly T[] _board;
+        private readonly byte[] _board;
 
         public Board(int size)
         {
             _size = size;
-            _board = new T[size * size];
+            _board = new byte[size * size];
             //board = new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
         }
 
-        int Rotate0(int row, int col) => StartLowSizeBySize(row) + StartLowOneByOne(col);
-        int Rotate1(int row, int col) => StartLowOneByOne(row) + StartHighSizeBySize(col);
-        int Rotate2(int row, int col) => StartHighSizeBySize(row) + StartHighOneByOne(col);
-        int Rotate3(int row, int col) => StartHighOneByOne(row) + StartLowSizeBySize(col);
-        int Rotate0T(int row, int col) => StartLowSizeBySize(row) + StartHighOneByOne(col);
-        int Rotate1T(int row, int col) => StartHighOneByOne(row) + StartHighSizeBySize(col);
-        int Rotate2T(int row, int col) => StartHighSizeBySize(row) + StartLowOneByOne(col);
-        int Rotate3T(int row, int col) => StartLowOneByOne(row) + StartLowSizeBySize(col);
+        public int Rotate0(int row, int col) => StartLowSizeBySize(row) + StartLowOneByOne(col);
+        public int Rotate1(int row, int col) => StartLowOneByOne(row) + StartHighSizeBySize(col);
+        public int Rotate2(int row, int col) => StartHighSizeBySize(row) + StartHighOneByOne(col);
+        public int Rotate3(int row, int col) => StartHighOneByOne(row) + StartLowSizeBySize(col);
+        public int Rotate0T(int row, int col) => StartLowSizeBySize(row) + StartHighOneByOne(col);
+        public int Rotate1T(int row, int col) => StartHighOneByOne(row) + StartHighSizeBySize(col);
+        public int Rotate2T(int row, int col) => StartHighSizeBySize(row) + StartLowOneByOne(col);
+        public int Rotate3T(int row, int col) => StartLowOneByOne(row) + StartLowSizeBySize(col);
 
-        private int StartLowOneByOne(int v) => v;
-        private int StartLowSizeBySize(int v) => v * _size;
-        private int StartHighOneByOne(int v) => _size - v - 1;
-        private int StartHighSizeBySize(int v) => _size * (_size - v - 1);
+        int StartLowOneByOne(int v) => v;
+        int StartLowSizeBySize(int v) => v * _size;
+        int StartHighOneByOne(int v) => _size - v - 1;
+        int StartHighSizeBySize(int v) => _size * (_size - v - 1);
 
         /// All the transformations
         public void Transforms()
@@ -106,9 +106,8 @@ namespace game
                     {
                         var pos = tranformState.Func(row, col);
                         var piece = _board[pos];
-
-                        tranformState.State += (ulong)piece * (ulong)Math.Pow(16, row*col);
-                        if(tranformState.State < lowest)
+                        tranformState.State += piece + (ulong)Math.Pow(16, row * _size + col);
+                        if (tranformState.State < lowest)
                         {
                             lowest = tranformState.State;
                         }

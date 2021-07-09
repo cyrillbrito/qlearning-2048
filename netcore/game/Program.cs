@@ -46,7 +46,7 @@ namespace game
 
 
             var bot = new Bot();
-            bot.Learn(10000);
+            bot.Learn(100000);
 
             //for (var i = 0; i < 1000; i++)
             //{

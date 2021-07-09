@@ -51,7 +51,7 @@ namespace game
 
         public int PlayOneGame(double explorationRate)
         {
-            var gameInstance = new GameInstance(4);
+            var gameInstance = new GameInstance(3);
             var moves = gameInstance.PossibleMoves();
 
             var gameState = gameInstance.GetState();
@@ -75,15 +75,20 @@ namespace game
 
                 var nextGameState = gameInstance.GetState();
                 var nextMoves = gameInstance.PossibleMoves();
-                var nextBestDir = bestMove(moves, nextGameState);
-
-                states.TryGetValue((nextGameState, nextBestDir), out var nextMaxQ);
-                states.TryGetValue((gameState, dir), out var q);
-
+                var nextMaxQ = 0d;
                 if (nextMoves.Count == 0)
                 {
                     reward = -20;
+                } 
+                else
+                {
+                    var nextBestDir = bestMove(nextMoves, nextGameState);
+                    states.TryGetValue((nextGameState, nextBestDir), out nextMaxQ);
                 }
+
+                states.TryGetValue((gameState, dir), out var q);
+
+                
 
                 states[(gameState, dir)] = (1 - learningRate) * q + learningRate * (reward + discountRate * nextMaxQ);
 

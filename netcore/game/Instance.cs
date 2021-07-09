@@ -21,7 +21,7 @@ namespace game
         public GameInstance(int size)
         {
             this.size = size;
-            board = new Board<byte>(size);
+            board = new Board(size);
             rng = new Random();
             PlaceNewPiece();
         }
@@ -37,9 +37,9 @@ namespace game
         private void PlaceNewPiece()
         {
             var zeros = new List<int>(size * size);
-            for (var i = 0; i < board.Length; i++)
+            for (var i = 0; i < size * size; i++)
             {
-                board.get
+                //board.get
                 if (board[i] == 0)
                 {
                     zeros.Add(i);
@@ -152,10 +152,10 @@ namespace game
         {
             switch (dir)
             {
-                case 0: return Rotate0;
-                case 1: return Rotate3;
-                case 2: return Rotate2;
-                case 3: return Rotate1;
+                case 0: return board.Rotate0;
+                case 1: return board.Rotate3;
+                case 2: return board.Rotate2;
+                case 3: return board.Rotate1;
                 default: throw new Exception();
             }
         }
@@ -179,7 +179,7 @@ namespace game
         {
             var sum = 0;
 
-            for (var i = 0; i < board.Length; i++)
+            for (var i = 0; i < size * size; i++)
             {
                 sum += board[i];
             }
@@ -189,40 +189,7 @@ namespace game
 
         public ulong GetState()
         {
-            var tranformStates = new List<TranformState>
-            {
-                new TranformState{ Func = Rotate0, State = 0 },
-                new TranformState{ Func = Rotate1, State = 0 },
-                new TranformState{ Func = Rotate2, State = 0 },
-                new TranformState{ Func = Rotate3, State = 0 },
-                new TranformState{ Func = Rotate0T, State = 0 },
-                new TranformState{ Func = Rotate1T, State = 0 },
-                new TranformState{ Func = Rotate2T, State = 0 },
-                new TranformState{ Func = Rotate3T, State = 0 },
-            };
-
-            for (var row = 0; row < size; row++)
-            {
-                for (var col = 0; col < size; col++)
-                {
-                    var lowest = ulong.MaxValue;
-                    foreach (var tranformState in tranformStates)
-                    {
-                        var pos = tranformState.Func(row, col);
-                        var piece = board[pos];
-
-                        tranformState.State += (ulong)piece * (ulong)Math.Pow(16, row*col);
-                        if(tranformState.State < lowest)
-                        {
-                            lowest = tranformState.State;
-                        }
-                    }
-
-                    tranformStates = tranformStates.Where(tranformState => tranformState.State == lowest).ToList();
-                }
-            }
-
-            return tranformStates[0].State;
+            return board.GetState();
         }
     }
 
