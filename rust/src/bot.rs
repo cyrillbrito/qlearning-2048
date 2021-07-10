@@ -8,10 +8,10 @@ use rand::seq::SliceRandom;
 
 use std::collections::HashMap;
 
-pub const N_EPISODES: i32 = 500000;
+pub const N_EPISODES: i32 = 1000000;
 pub const LEARNING_RATE: f32 = 0.1;
 pub const DISCOUNT_VALUE: f32 = 0.9;
-pub const EXPLORATION_RATE_DECAY: f32 = 0.01;
+pub const EXPLORATION_RATE_DECAY: f32 = 0.02;
 
 pub fn go() {
     let mut current_percent = 0;
@@ -40,13 +40,13 @@ pub fn go() {
     // }
 }
 
-fn play_one_game(exploration_rate: f32, states: &mut HashMap<(u64, u8), f32>) -> i32 {
+fn play_one_game(exploration_rate0: f32, states: &mut HashMap<(u64, u8), f32>) -> i32 {
     let mut board: [u8; board::SIZE2] = [0; board::SIZE2];
     game::place_new_piece(&mut board);
     let mut game_state = game::state(&mut board);
     let mut possible_moves = game::get_possible_moves(&board);
     let mut total_score = 0;
-
+    let mut exploration_rate = exploration_rate0.clone();
     while possible_moves.len() != 0 {
         let dir = choose_dir(game_state, &possible_moves, exploration_rate, &states);
 
@@ -81,7 +81,10 @@ fn play_one_game(exploration_rate: f32, states: &mut HashMap<(u64, u8), f32>) ->
         );
 
         game_state = next_game_state;
+        exploration_rate += 0.01;
     }
+
+    // println!("{}, {}", count, exploration_rate);
 
     return total_score;
 }
@@ -120,7 +123,11 @@ fn choose_dir(
         return possible_dir[max_i];
     }
 
-    let weights = weights_formula(&qs, exploration_rate);
+    let weights = if 1.0 <= exploration_rate {
+        weights_formula(&qs, 1.0)
+    } else {
+        weights_formula(&qs, exploration_rate)
+    };
 
     let mut rng = rand::thread_rng();
     let wi = WeightedIndex::new(&weights);
