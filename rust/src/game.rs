@@ -1,24 +1,25 @@
 use super::base;
 use super::board;
+use super::board::{Board, OrientationFn, SIZE, SIZE2};
 use rand;
 
-// TODO This can be improved!
-// Instead of trying every move run a custom loop to check for possible moves
-pub fn get_possible_moves(board: &[u8; board::SIZE2]) -> Vec<u8> {
-    let mut possible_moves = Vec::new();
+// Good
+pub fn get_possible_dirs(board: &Board) -> Vec<u8> {
+    let mut possible_dirs = Vec::new();
 
     for dir in 0..4 {
         let orientation_fn = dir_to_orientation(dir);
         if orientation_has_move(board, orientation_fn) {
-            possible_moves.push(dir);
+            possible_dirs.push(dir);
         }
     }
 
-    return possible_moves;
+    return possible_dirs;
 }
 
-fn orientation_has_move(board: &[u8], orientation_fn: board::OrientationFn) -> bool {
-    for row in 0..board::SIZE {
+// Good
+fn orientation_has_move(board: &Board, orientation_fn: OrientationFn) -> bool {
+    for row in 0..SIZE {
         if row_has_move(board, orientation_fn, row) {
             return true;
         }
@@ -27,11 +28,12 @@ fn orientation_has_move(board: &[u8], orientation_fn: board::OrientationFn) -> b
     return false;
 }
 
-fn row_has_move(board: &[u8], orientation_fn: board::OrientationFn, row: usize) -> bool {
+// Good
+fn row_has_move(board: &Board, orientation_fn: OrientationFn, row: usize) -> bool {
     let mut has_zero = false;
     let mut prev = 255;
 
-    for col in 0..board::SIZE {
+    for col in 0..SIZE {
         let piece = board[orientation_fn(row, col)];
 
         if piece == 0 {
@@ -46,23 +48,23 @@ fn row_has_move(board: &[u8], orientation_fn: board::OrientationFn, row: usize) 
     return false;
 }
 
-pub fn move_board(board: &mut [u8], dir: u8) -> i32 {
+pub fn move_board(board: &mut Board, dir: u8) -> i32 {
     let mut score = 0;
     let orientation_fn = dir_to_orientation(dir);
 
-    for row in 0..board::SIZE {
+    for row in 0..SIZE {
         score += move_row(board, orientation_fn, row);
     }
 
     return score;
 }
 
-fn move_row(board: &mut [u8], orientation_fn: board::OrientationFn, row: usize) -> i32 {
+fn move_row(board: &mut Board, orientation_fn: OrientationFn, row: usize) -> i32 {
     let mut score = 0;
     let mut new_col = 0;
     let mut new_position = orientation_fn(row, new_col);
 
-    for col in 0..board::SIZE {
+    for col in 0..SIZE {
         let position = orientation_fn(row, col);
         let piece = board[position];
 
@@ -86,20 +88,18 @@ fn move_row(board: &mut [u8], orientation_fn: board::OrientationFn, row: usize) 
     return score;
 }
 
-// TODO MAP BETWEEN
-fn dir_to_orientation(dir: u8) -> board::OrientationFn {
-    if dir == 0 {
-        return board::orientation0;
-    } else if dir == 1 {
-        return board::orientation3;
-    } else if dir == 2 {
-        return board::orientation2;
-    } else {
-        return board::orientation1;
+fn dir_to_orientation(dir: u8) -> OrientationFn {
+    match dir {
+        0 => board::orientation0,
+        1 => board::orientation3,
+        2 => board::orientation2,
+        3 => board::orientation1,
+        _ => board::orientation0,
     }
 }
 
-pub fn place_new_piece(board: &mut [u8]) -> bool {
+// why return
+pub fn place_new_piece(board: &mut Board) -> bool {
     let mut zero_positions = Vec::new();
     for (i, piece) in board.iter().enumerate() {
         if *piece == 0 {
@@ -122,7 +122,7 @@ pub fn place_new_piece(board: &mut [u8]) -> bool {
 
 // This can be improved, curr it tries every orientation to see the smallest
 // It could iterate piece by piece for the smallest
-pub fn state(board: &mut [u8; board::SIZE2]) -> u64 {
+pub fn state(board: &mut Board) -> u64 {
     let orientations = [
         board::orientation1,
         board::orientation2,
@@ -133,7 +133,7 @@ pub fn state(board: &mut [u8; board::SIZE2]) -> u64 {
         board::orientation3_t,
     ];
 
-    let mut chosen_orientation: board::OrientationFn = board::orientation0;
+    let mut chosen_orientation: OrientationFn = board::orientation0;
     let mut state = base::to_decimal_orientation(board, chosen_orientation);
 
     for orientation in orientations {
@@ -144,11 +144,11 @@ pub fn state(board: &mut [u8; board::SIZE2]) -> u64 {
         }
     }
 
-    let mut new_board: [u8; board::SIZE2] = [0; board::SIZE2];
+    let mut new_board: Board = [0; SIZE2];
     let mut i = 0;
 
-    for row in 0..board::SIZE {
-        for col in 0..board::SIZE {
+    for row in 0..SIZE {
+        for col in 0..SIZE {
             let pos = chosen_orientation(row, col);
             let piece = board[pos];
             new_board[i] = piece;
@@ -158,6 +158,15 @@ pub fn state(board: &mut [u8; board::SIZE2]) -> u64 {
 
     *board = new_board;
     return state;
+}
+
+pub fn play(board: &mut Board, dir: u8) -> (i32, u64, Vec<u8>) {
+    let score = move_board(board, dir);
+    place_new_piece(board);
+    let state = state(board);
+    let possible_dirs = get_possible_dirs(board);
+
+    return (score, state, possible_dirs);
 }
 
 #[test]
@@ -181,9 +190,9 @@ fn test_place_new_error() {
 }
 
 #[test]
-fn test_possible_moves() {
+fn test_possible_dirs() {
     let board = [3, 2, 1, 2];
-    let result = get_possible_moves(&board);
+    let result = get_possible_dirs(&board);
 
     assert_eq!(0, result.len());
 }

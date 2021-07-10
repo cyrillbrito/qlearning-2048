@@ -1,10 +1,8 @@
-use super::base;
 use super::board;
 use super::game;
 use rand;
 use rand::distributions::WeightedIndex;
 use rand::prelude::*;
-use rand::seq::SliceRandom;
 
 use std::collections::HashMap;
 
@@ -44,25 +42,21 @@ fn play_one_game(exploration_rate0: f32, states: &mut HashMap<(u64, u8), f32>) -
     let mut board: [u8; board::SIZE2] = [0; board::SIZE2];
     game::place_new_piece(&mut board);
     let mut game_state = game::state(&mut board);
-    let mut possible_moves = game::get_possible_moves(&board);
+    let mut possible_dirs = game::get_possible_dirs(&board);
     let mut total_score = 0;
     let mut exploration_rate = exploration_rate0.clone();
-    while possible_moves.len() != 0 {
-        let dir = choose_dir(game_state, &possible_moves, exploration_rate, &states);
+    while possible_dirs.len() != 0 {
+        let dir = choose_dir(game_state, &possible_dirs, exploration_rate, &states);
 
-        let mut score = game::move_board(&mut board, dir);
+        let (mut score, next_game_state, next_possible_dirs) = game::play(&mut board, dir);
+        possible_dirs = next_possible_dirs;
         total_score += score;
 
-        game::place_new_piece(&mut board);
-
-        let next_game_state = game::state(&mut board);
-        possible_moves = game::get_possible_moves(&board);
-
         let mut max_q = 0.0;
-        if possible_moves.len() == 0 {
+        if possible_dirs.len() == 0 {
             score = -20;
         } else {
-            let next_best_dir = best_move(&possible_moves, next_game_state, states);
+            let next_best_dir = best_move(&possible_dirs, next_game_state, states);
             let option = states.get(&(next_game_state, next_best_dir));
             if option.is_some() {
                 max_q = *option.unwrap();
@@ -193,19 +187,19 @@ fn weights_formula(qs: &Vec<f32>, exploration_rate: f32) -> Vec<f32> {
     return weights;
 }
 
-fn best_move(possible_moves: &Vec<u8>, state: u64, states: &HashMap<(u64, u8), f32>) -> u8 {
-    let mut dir = possible_moves[0];
+fn best_move(possible_dirs: &Vec<u8>, state: u64, states: &HashMap<(u64, u8), f32>) -> u8 {
+    let mut dir = possible_dirs[0];
     let mut best_q = -100.0;
 
-    for possible_move in possible_moves {
-        let option = states.get(&(state, *possible_move));
+    for possible_dir in possible_dirs {
+        let option = states.get(&(state, *possible_dir));
         let mut q = 0.0;
         if option.is_some() {
             q = *option.unwrap();
         }
         if best_q < q {
             best_q = q;
-            dir = *possible_move;
+            dir = *possible_dir;
         }
     }
 

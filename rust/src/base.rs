@@ -1,6 +1,6 @@
-use super::board;
+use super::board::{Board, OrientationFn, SIZE};
 
-pub fn to_decimal(values: &[u8], base: u8) -> u64 {
+pub fn to_decimal(values: &Board, base: u8) -> u64 {
     let mut result: u64 = 0;
     let mut base_multiplier: u64 = 1;
 
@@ -12,12 +12,12 @@ pub fn to_decimal(values: &[u8], base: u8) -> u64 {
     return result;
 }
 
-pub fn to_decimal_orientation(board: &board::Board, orientation_fn: board::OrientationFn) -> u64 {
+pub fn to_decimal_orientation(board: &Board, orientation_fn: OrientationFn) -> u64 {
     let mut result: u64 = 0;
     let mut base_multiplier: u64 = 1;
 
-    for row in 0..board::SIZE {
-        for col in 0..board::SIZE {
+    for row in 0..SIZE {
+        for col in 0..SIZE {
             let value = board[orientation_fn(row, col)];
             result += value as u64 * base_multiplier;
             base_multiplier *= 16;

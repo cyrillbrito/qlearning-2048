@@ -57,7 +57,7 @@ pub fn orientation3_t(row: usize, col: usize) -> usize {
 }
 
 #[allow(dead_code)]
-pub fn print(board: &[u8; SIZE2]) {
+pub fn print(board: &Board) {
     println!("-----");
     for (i, piece) in board.iter().enumerate() {
         if (i + 1) % SIZE == 0 {

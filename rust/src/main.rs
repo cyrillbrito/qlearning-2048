@@ -1,8 +1,5 @@
-mod base;
-mod board;
-mod bot;
-mod game;
+use qlearning::go;
 
 fn main() {
-    bot::go();
+    go();
 }
