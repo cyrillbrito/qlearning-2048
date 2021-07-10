@@ -12,13 +12,13 @@ pub fn to_decimal(values: &[u8], base: u8) -> u64 {
     return result;
 }
 
-pub fn to_decimal_orientation(board: &[u8], rotate_fn: fn(u8, u8) -> u8) -> u64 {
+pub fn to_decimal_orientation(board: &board::Board, orientation_fn: board::OrientationFn) -> u64 {
     let mut result: u64 = 0;
     let mut base_multiplier: u64 = 1;
 
     for row in 0..board::SIZE {
         for col in 0..board::SIZE {
-            let value = board[rotate_fn(row, col) as usize];
+            let value = board[orientation_fn(row, col)];
             result += value as u64 * base_multiplier;
             base_multiplier *= 16;
         }
