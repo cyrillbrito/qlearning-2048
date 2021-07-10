@@ -71,6 +71,7 @@ fn move_row(board: &mut [u8], rotate_fn: fn(u8, u8) -> u8, row: u8) -> i32 {
             if board[new_position] == 0 {
                 board[new_position] = piece;
             } else if board[new_position] == piece {
+                // score += 2 * (piece as i32).pow(2);
                 score += 1;
                 board[new_position] += 1;
                 new_col += 1;
@@ -118,7 +119,9 @@ pub fn place_new_piece(board: &mut [u8]) -> bool {
     return true;
 }
 
-pub fn state(board: &[u8]) -> u64 {
+// This can be improved, curr it tries every orientation to see the smallest
+// It could iterate piece by piece for the smallest
+pub fn state(board: &mut [u8; board::SIZE2]) -> u64 {
     let orientations = [
         board::rotate1,
         board::rotate2,
@@ -129,15 +132,30 @@ pub fn state(board: &[u8]) -> u64 {
         board::rotate3_t,
     ];
 
-    let mut state = base::to_decimal_orientation(board, board::rotate0);
+    let mut chosen_orientation: fn(u8, u8) -> u8 = board::rotate0;
+    let mut state = base::to_decimal_orientation(board, chosen_orientation);
 
     for orientation in orientations {
         let s2 = base::to_decimal_orientation(board, orientation);
         if state < s2 {
+            chosen_orientation = orientation;
             state = s2;
         }
     }
 
+    let mut new_board: [u8; board::SIZE2] = [0; board::SIZE2];
+    let mut i = 0;
+
+    for row in 0..board::SIZE {
+        for col in 0..board::SIZE {
+            let pos = chosen_orientation(row, col) as usize;
+            let piece = board[pos];
+            new_board[i] = piece;
+            i += 1;
+        }
+    }
+
+    *board = new_board;
     return state;
 }
 

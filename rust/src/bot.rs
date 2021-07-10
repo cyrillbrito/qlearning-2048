@@ -8,10 +8,10 @@ use rand::seq::SliceRandom;
 
 use std::collections::HashMap;
 
-pub const N_EPISODES: i32 = 400000;
+pub const N_EPISODES: i32 = 500000;
 pub const LEARNING_RATE: f32 = 0.1;
-pub const DISCOUNT_VALUE: f32 = 0.8;
-pub const EXPLORATION_RATE_DECAY: f32 = 0.015;
+pub const DISCOUNT_VALUE: f32 = 0.9;
+pub const EXPLORATION_RATE_DECAY: f32 = 0.01;
 
 pub fn go() {
     let mut current_percent = 0;
@@ -43,23 +43,19 @@ pub fn go() {
 fn play_one_game(exploration_rate: f32, states: &mut HashMap<(u64, u8), f32>) -> i32 {
     let mut board: [u8; board::SIZE2] = [0; board::SIZE2];
     game::place_new_piece(&mut board);
+    let mut game_state = game::state(&mut board);
     let mut possible_moves = game::get_possible_moves(&board);
-    // let mut game_state = game::state(&board);
-    let mut game_state = base::to_decimal(&board, 16);
     let mut total_score = 0;
 
     while possible_moves.len() != 0 {
         let dir = choose_dir(game_state, &possible_moves, exploration_rate, &states);
 
         let mut score = game::move_board(&mut board, dir);
-        game::place_new_piece(&mut board);
-        if exploration_rate == 0.0 {
-            // board::print(&board);
-        }
         total_score += score;
 
-        // let next_game_state = game::state(&board);
-        let next_game_state = base::to_decimal(&board, 16);
+        game::place_new_piece(&mut board);
+
+        let next_game_state = game::state(&mut board);
         possible_moves = game::get_possible_moves(&board);
 
         let mut max_q = 0.0;
@@ -96,30 +92,98 @@ fn choose_dir(
     exploration_rate: f32,
     states: &HashMap<(u64, u8), f32>,
 ) -> u8 {
-    let mut weights = Vec::<f32>::new();
+    let mut qs = Vec::<f32>::new();
 
     for dir in possible_dir {
         let state = (game_state, *dir);
         let option = states.get(&state);
-        let mut q = 1.0;
+        let mut q = 0.0;
         if option.is_some() {
             q += *option.unwrap();
-            // println!("{}", q);
+        }
+        qs.push(q);
+    }
+
+    // Formula does not work with a zero exploration_rate
+    // When this happens just return the best dir
+    // Also because of precision limitations
+    //   doesn't work with exploration_rate less that 0.034
+    if exploration_rate <= 0.034 {
+        let mut max_i = 0;
+
+        for (i, q) in qs.iter().enumerate() {
+            if qs[max_i] < *q {
+                max_i = i;
+            }
         }
 
-        weights.push(q * (1.0 - exploration_rate));
+        return possible_dir[max_i];
     }
+
+    let weights = weights_formula(&qs, exploration_rate);
 
     let mut rng = rand::thread_rng();
     let wi = WeightedIndex::new(&weights);
-
-    if wi.is_ok() {
-        let dist = wi.unwrap();
-        let dir = possible_dir[dist.sample(&mut rng)];
-        return dir;
-    } else {
-        return *possible_dir.choose(&mut rng).unwrap();
+    if wi.is_err() {
+        for w in &weights {
+            print!("{} ", *w);
+        }
+        println!();
+        println!();
+        println!();
+        println!();
+        return possible_dir[0];
     }
+    let dist = wi.unwrap();
+
+    let dir = possible_dir[dist.sample(&mut rng)];
+
+    return dir;
+}
+
+fn weights_formula(qs: &Vec<f32>, exploration_rate: f32) -> Vec<f32> {
+    let mut weights = Vec::new();
+
+    let exponential = 1.0 / exploration_rate;
+    let mut min = 99999999999999999999999999999999999999.9;
+    let mut powered_qs = Vec::new();
+
+    for q in qs {
+        let powered = if *q < 0.0 {
+            -f32::powf(-*q, exponential)
+        } else {
+            f32::powf(*q, exponential)
+        };
+
+        assert!(powered != f32::NAN);
+        powered_qs.push(powered);
+        if powered < min {
+            min = powered;
+        }
+    }
+
+    let mut sum = 0.0;
+    for powered in &powered_qs {
+        sum += *powered - min;
+    }
+
+    let static_dist = exploration_rate / qs.len() as f32;
+
+    // Formula does not work with a zero sum
+    // When this happens just return the best standard distribution
+    if sum == 0.0 {
+        for _ in qs {
+            weights.push(static_dist);
+        }
+        return weights;
+    }
+
+    for powered in &powered_qs {
+        let weight = (1.0 - exploration_rate) * (*powered - min) / sum + static_dist;
+        weights.push(weight);
+    }
+
+    return weights;
 }
 
 fn best_move(possible_moves: &Vec<u8>, state: u64, states: &HashMap<(u64, u8), f32>) -> u8 {
